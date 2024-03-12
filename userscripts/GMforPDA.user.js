@@ -17,7 +17,7 @@
  *    use the same storage keys as you, so use a unique key to prevent this issue. 
  *  - The xmlhttpRequest function in TamperMonkey is quite complex, and I've only implemented the most basic functionality. It
  *    only supports the keys `url`, `method`, `data`, `body`, `headers`, `onload` and `onerror`. If you need more functionality,
- *    you can use the PDA_httpGet and PDA_httpPost functions directly.
+ *    you can use the PDA_httpGet, PDA_httpPost, PDA_fetch functions directly.
  */
 
 const ver = 0.2;

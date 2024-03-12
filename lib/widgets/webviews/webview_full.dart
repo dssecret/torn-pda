@@ -1823,6 +1823,47 @@ class WebViewFullState extends State<WebViewFull> with WidgetsBindingObserver {
       },
     );
 
+    webView.addJavaScriptHandler(
+      handlerName: 'PDA_fetch',
+      callback: (args) async {
+        final Map<String, Object?> options = args[1];
+        final String method = (options["method"] ?? "GET").toUpperCase();  // default method in HTTP when no method is specified
+        final http.Request preparedRequest = http.Request(method, WebUri(args[0]));
+
+        if (options["body"] != null && (method == "GET" || method == "HEAD")) {
+          // A payload within a GET [and HEAD] request message has no defined semantics;
+          // sending a payload body on a GET request might cause some existing
+          // implementations to reject the request.
+          // 
+          // This should be handled by the JS function
+          throw Exception("HEAD or GET request can not have a body");
+        }
+
+        preparedRequest.body = options["body"];
+
+        // HTTP requests default to follow redirects unless otherwise stated
+        // Found in MDN's fetch reference and Dart's http.dart.BaseRequest.followRedirects
+        options["redirect"] = options["redirect"] ?? "follow";
+        preparedRequest.followRedirects = (options["redirect"] == "follow");
+
+        // May not be able to change headers this way as Request.headers do not have a getter/setter
+        preparedRequest.headers = Map<String, String>.from(options["headers"] ?? {});
+
+        final http.StreamedResponse respStream = await preparedRequest.send();
+        final http.Response resp = await http.Response.fromStream(respStream);
+
+        return {
+          'body': resp.body,
+          'headers': resp.headers.keys.map((key) => '$key: ${resp.headers[key]}').join("\r\n"),
+          'ok': resp.statusCode ~/ 100 == 2,
+          'redirected": null,  // TODO: needs to be implemented
+          'status': resp.statusCode,
+          'statusText': resp.reasonPhrase,
+          'type': null,  // TODO: needs to be implemented
+      };
+      }
+    );
+
     // JS HANDLER
     webView.addJavaScriptHandler(
       handlerName: 'PDA_evaluateJavascript',
